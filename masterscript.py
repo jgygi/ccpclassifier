@@ -396,7 +396,7 @@ _ = train_model(
     percentTrainToVal=percentTrainToVal,
     shuffleTrainingData=shuffleTrainingData,
     showTrainingPrints=showTrainingPrints,
-    numPeriods=numPeriods)
+    numPeriods=numPeriods) 
 
 
 
