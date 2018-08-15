@@ -9,6 +9,11 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 import math
 
+# prepareData Function:
+# Called by the main function in masterscript.py, prepareData will return a tensorflow readable dataframe with all of the clathrin-related columns
+# The program also converts categorical variables such as category into 'one hot' encoding ([0,1,0,0] for 2...)
+# Returns: a pandas DataFrame
+
 def prepareData(numCells, folderPath, dropCols = [], showHist = False, catsToUse = [1,2,3,4,5,6,7,8], pvalCutOff = .005, numConsecPVal = 3, mustBeSecondHalf = True, showPrints = True, showBoxplot = True, boxCol = 'max_msd', checkLifetime = True):
     #Change Parameters for Code: --------------------------------------
     
@@ -46,6 +51,7 @@ def prepareData(numCells, folderPath, dropCols = [], showHist = False, catsToUse
     print(df_norm)
     df_scaled = pd.DataFrame(StandardScaler().fit_transform(df_norm), columns = df_norm.columns)
     df_norm[:] = df_scaled[:].values
+
     #NOTE: Change below to change them individually -------
     df_norm['aux'] = df['aux'].values
     df_norm['lifetime'] = df['lifetime'].values

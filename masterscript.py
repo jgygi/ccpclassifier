@@ -14,16 +14,75 @@ from sklearn import metrics
 import tensorflow as tf
 from tensorflow.python.data import Dataset
 
+#Supresses the many log messages given by TensorFlow. Does not affect the algorithm
 tf.logging.set_verbosity(tf.logging.ERROR)
+
+#Sets the max. number of rows to display for a dataframe to not flood the terminal
 pd.options.display.max_rows = 10
 pd.options.display.float_format = '{:.1f}'.format
 
+# ___________________________________________________________________________
+#
+#                              DATA PREPARATION                              
+# ___________________________________________________________________________
+
+
+#Parameters
+#   numCells - int - how many files to use (folders should be labeled 'Cell1_1s' or something similar)
+#              EX: numCells = 4 would use folders named "Cell1_1s", "Cell2_1s", "Cell3_1s", and "Cell4_1s"
+#   folderPath -       string -              The path to the Cell folders (i.e. where the different folders labeled CellN_Ns are)
+#   dropCols -         array of strings -    Which (if any) of the parameters to not include in the machine learning process
+#   catsToUse -        array of int arrays - Restricions on categories. (acceptable values = 1-8)
+#   pvalCutOff -       array of float's -    When determining Aux +, pval <= pvalCutOff will be valid
+#   mustBeSecondHalf - array of boolean's -  Whether or not to restrict Auxilin peaks to the second half of CCP lifetime
+#   checklifetime -    array of boolean's -  Whether to allow for only numConsecPVal - 1 values for lifetime < 20.
+
+numCells = 8
+folderPath = '/home/gokul/Documents/PythonScripts/KangminData/'
+dropCols = ['frame']            #Use multiple values like the format below to do multiple runs for comparison:
+catsToUse = [[1,2,3,4]]         #[[1,2,3], [1],   [1],   [1]]
+pvalCutOff = [.005]             #[1,       1,     .005,  .005]
+numConsecPVal = [3]             #[1,       1,     3,     3]
+mustBeSecondHalf = [True]       #[False,   False, False, True]
+checkLifetime = [True]          #[False,   False, False, True]
+
+#TensorFlow Parameters:
+#   percentTrain - the amount of total data to use for training
+#   percentTest - the amount of total data to use for testing (defaults to 1 - percentTrain)
+#   percentTrainToVal - the subset of Training to Validation data of percentTrain
+#   showTrainingPrints - will print out the training and validation data descriptions after each period
+#   shuffleTrainingData - whether or not to shuffle training and validation between periods (defaults to True)
+#   numperiods - how many times to repeat training and validation
+
+percentTrain = .8               
+percentTest = 1 - percentTrain
+percentTrainToVal = .8          #This value is a subset of percentTrain (ex. [percentTrainToVal = .5] of [percentTrain = .8] would be .4 of the total tracks)
+showTrainingPrints = False
+shuffleTrainingData = True
+numPeriods = 20
+
+#Options
+#   ShowHist: whether or not to pause the program to show normalized and unnormalized histograms of the features
+#   ShowPrints: used for debugging, will show more inforamtion throughout the loading process
+#   ShowBoxplot: used for showing the Boxplot to pause the program
+
+showHist = False
+showPrints = False
+showBoxplot = False
+
+
+# ___________________________________________________________________________
+#
+#                                  FUNCTIONS                              
+# ___________________________________________________________________________
+
+
 def preprocess_features(df):
-    """Prepares input features from California housing data set.
+    """Prepares input features from the data set.
 
     Args:
         df: A Pandas DataFrame expected to contain data
-        from the California housing data set.
+        from the data set.
     Returns:
         A DataFrame that contains the features to be used for the model, including
         synthetic features.
@@ -38,11 +97,11 @@ def preprocess_features(df):
     return processed_features
 
 def preprocess_targets(df):
-    """Prepares target features (i.e., labels) from California housing data set.
+    """Prepares target features (i.e., labels) from the data set.
 
     Args:
         df: A Pandas DataFrame expected to contain data
-        from the California housing data set.
+        from the data set.
     Returns:
         A DataFrame that contains the target feature.
     """
@@ -123,12 +182,12 @@ def train_model(
     #    
     #Returns:
     #    A `DNNClassifier` object trained on the training data.
+    #    3 CSV Files labeled 'total_pred', 'pred_correct' and 'pred_incorrect'
 
     # Re-Index Randomly:
-    
     df_sample = df_total.sample(frac=1)
 
-    # Split into Training and Testing:
+    # Perform initial split into Training and Testing:
     numTotal =  df_sample.shape[0]
     numTotalTrain = math.ceil(percentTrain * numTotal)
     numTotalTest = numTotal - numTotalTrain
@@ -245,6 +304,9 @@ def train_model(
     # Evaluate Test Set:
     test_result = dnn_classifier.evaluate(
         input_fn= test_input_fn)
+        
+    #0 - 'Aux -'
+    #1 - 'Aux +' 
     expected = [0,1]
     predictions = dnn_classifier.predict(
         input_fn= test_input_fn)
@@ -282,50 +344,21 @@ def train_model(
     return dnn_classifier
 
 
-
 # ___________________________________________________________________________
 #
-#                              DATA PREPARATION                              
+#                              DATA COLLECTION                              
 # ___________________________________________________________________________
 
-
-
-#Parameters
-numCells = 8
-folderPath = '/home/gokul/Documents/PythonScripts/KangminData/'
-dropCols = ['frame']            #Use arrays like the format below to do multiple runs for comparison:
-catsToUse = [[1,2,3,4]]         #[[1,2,3,4,5,6,7,8], [1], [1], [1]]
-pvalCutOff = [.005]             #[1, 1, .005, .005]
-numConsecPVal = [3]             #[1, 1, 3, 3]
-mustBeSecondHalf = [True]       #[False, False, False, True]
-checkLifetime = [True]          #[False, False, False, True]
-
-#TensorFlow Parameters:
-#percentTrain - the amount of total data to use for training
-#percentTest - the amount of total data to use for testing (defaults to 1 - percentTrain)
-#percentTrainToVal - the subset of Training to Validation data of percentTrain
-#showTrainingPrints - will print out the training and validation data descriptions after each period
-#shuffleTrainingData - whether or not to shuffle training and validation between periods (defaults to True)
-#numperiods - how many times to repeat training and validation
-percentTrain = .8               
-percentTest = 1 - percentTrain
-percentTrainToVal = .8          #This value is a subset of percentTrain (ex. [percentTrainToVal = .5] of [percentTrain = .8] would be .4 of the total tracks)
-showTrainingPrints = False
-shuffleTrainingData = True
-numPeriods = 20
-
-#Options
-#ShowHist: whether or not to pause the program to show normalized and unnormalized histograms of the features
-#ShowPrints: used for debugging, will show more inforamtion throughout the loading process
-#ShowBoxplot: used for showing the Boxplot to pause the program
-showHist = False
-showPrints = False
-showBoxplot = False
-
+#NOTE: As stated above, by adding to the parameters with arrays such as
+#      pvalCutOff (i.e. pvalCutOff = [.005, .01]), the program will collect the
+#      data multiple times to compare Aux + and Aux - values.
+#      HOWEVER: ONLY THE FINAL ITERATION WILL BE USED IN TENSORFLOW!
 
 for i in range(0,len(catsToUse)):
+    #Call 'datapreparation.py' and convert all of the matlab files into TensorFlow readable format
     df_total = dp.prepareData(numCells = numCells, folderPath = folderPath, dropCols = dropCols, showHist = showHist, catsToUse = catsToUse[i], pvalCutOff = pvalCutOff[i], numConsecPVal = numConsecPVal[i], mustBeSecondHalf = mustBeSecondHalf[i], showPrints = showPrints, showBoxplot = showBoxplot, checkLifetime = checkLifetime[i])
     
+    #Separate (as a checkpoint) the aux + and aux - to describe them
     df_aux0 = df_total.loc[df_total['aux'].isin([0])]
     df_aux1 = df_total.loc[df_total['aux'].isin([1])]
 
@@ -347,13 +380,12 @@ print("\nEnd of Data Collection / Filtering -----------------------------\n")
 # 
 # Data: df_total - All Continuous Variables: lifetime, intensity_max, bkground, tdisp, msd, avgRise, avgDecay, riseVsDecay, avgRiseMom, avgDecayMom, riseVsDecayMom
 #       NOTE:   - Category converted into OneHot (i.e. category 4 - [0,0,0,1,0,0,0,0])
-df_total = df_total.astype(float)
-#df_total = df_total.reset_index(drop=True)
-numTracks =  df_total.shape[0]
-index_dict = pd.Series(range(numTracks), index = df_total.index)
-print("INDEX!!!")
-print(index_dict)
 
+#Convert the DataFrame into float values and feed into TensorFlow (train_model function)
+df_total = df_total.astype(float)
+numTracks =  df_total.shape[0]
+
+#NOTE: The learning rate, steps, and batch size are all inputted below. Modify them here to optimize model.
 _ = train_model(
     learning_rate=.0001,
     steps=1000,

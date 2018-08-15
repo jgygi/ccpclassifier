@@ -1,0 +1,49 @@
+INSTRUCTIONS TO RUN TENSORFLOW SCRIPTS:
+
+1. Run "Terminal"
+2. type: source ~/tensorflow/venv/bin/activate
+3. type: cd Documents/PythonScripts/
+4. type: python masterscript.py
+
+NOTES:
+
+Where to modify the code to change things:
+
+1. Editing the 'classification' of Aux + and Aux -
+- trackloader.py
+- search for the comment 'Add classification parameters to this section'
+- OR: search for this code block and make adjustments...
+        #Check if Aux+ or Aux-
+        # Add classification parameters to this section
+        isAux = False
+        pval_cutoff = pvalCutOff
+        #Look for Consecutive True's
+        if(lifetime < 20 and checkLifetime):
+            numConsecPValTemp = numConsecPVal - 1
+        else:
+            numConsecPValTemp = numConsecPVal
+        for x in range(len(pvals_t2) - (numConsecPValTemp - 1)):
+            isSig = False
+            for j in range(x, x + (numConsecPValTemp)):
+                isSig = pvals_t2[j] <= pval_cutoff
+                if not isSig:
+                    break
+            if mustBeSecondHalf:
+                if (x < (int(lifetime)/2)):
+                    isSig = False
+            if isSig:
+                isAux = True
+        if isAux:
+            # Classify as Aux +
+            aux = 1
+        else:
+            # Classify as Aux -
+            aux = 0
+
+2. Change the machine learning parameters:
+- for inputs such as 'learning rate', 'batch size', and 'steps', search for:
+  NOTE: The learning rate, steps, and batch size are all inputted below. Modify them here to optimize model.
+- for other inputs such as 'shuffling' and how many periods / repetitions, see the "Data Preparation" header.
+
+If there are any other questions about the code, contact Jeremy Gygi at jeremy.gygi@gmail.com
+
