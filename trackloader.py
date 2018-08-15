@@ -87,6 +87,7 @@ def pullMatrixData(cellNum, parentFolderPath, numConsecPVal = 3, pvalCutOff = .0
             msd_max = max(msd)
 
         #Check if Aux+ or Aux-
+        # Add classification parameters to this section
         isAux = False
         pval_cutoff = pvalCutOff
         #Look for Consecutive True's
@@ -106,8 +107,10 @@ def pullMatrixData(cellNum, parentFolderPath, numConsecPVal = 3, pvalCutOff = .0
             if isSig:
                 isAux = True
         if isAux:
+            # Classify as Aux +
             aux = 1
         else:
+            # Classify as Aux -
             aux = 0
 
         #Generate Full Intensity for Min / Max Rise / Decay
@@ -213,9 +216,3 @@ def pullMatrixData(cellNum, parentFolderPath, numConsecPVal = 3, pvalCutOff = .0
 #
 
 def filterMatrixData(data, dropNA = False, catsToUse = [1,2,3,4,5,6,7,8], colsToDrop = []):
-    if dropNA:
-        data = data.dropna()
-    data = data.loc[data['catIdx'].isin(catsToUse)]
-    for col in colsToDrop:
-        data = data.drop(labels = col, axis = 1)
-    return(data)
